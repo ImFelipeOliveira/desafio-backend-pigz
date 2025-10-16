@@ -1,0 +1,40 @@
+# Logs
+/var/log/
+
+# Cache
+/var/cache/
+
+# Vendor
+/vendor/
+
+# Environment files
+.env.local
+.env.local.php
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Database
+*.sql
+*.sqlite
