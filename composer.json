@@ -54,7 +54,9 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
-        ]
+        ],
+        "dev": "docker compose -f docker-compose-dev.yaml up",
+        "stop": "docker compose -f docker-compose-dev.yaml down -v"
     },
     "conflict": {
         "symfony/symfony": "*"
