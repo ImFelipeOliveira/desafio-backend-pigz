@@ -16,6 +16,10 @@ services:
     App\:
         resource: "../src/"
 
+    App\Domain\Repositories\UserRepositoryInterface:
+        alias: App\Infra\Persistence\Doctrine\Repository\UserRepository
+        public: false
+
     App\Infra\Adapter\Jwt\FirebaseJwtManager:
         arguments:
             $privateKeyPath: "%env(resolve:JWT_PRIVATE_KEY_PATH)%"
@@ -24,5 +28,10 @@ services:
 
     App\Application\Security\JwtManagerInterface: '@App\Infra\Adapter\Jwt\FirebaseJwtManager'
 
+    App\Application\UseCase\:
+        resource: "../src/Application/UseCase/*"
+        autowire: true
+        autoconfigure: true
+        public: false
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

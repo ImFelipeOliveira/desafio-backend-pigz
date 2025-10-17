@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Security;
 
-use Symfony\Component\Security\Core\User\UserInterface;
+use App\Domain\Entity\User as UserDomain;
 
 interface JwtManagerInterface
 {
-  public function createToken(UserInterface $user): string;
+  public function createToken(UserDomain $user): string;
 
   public function validateToken(string $token): bool;
 
