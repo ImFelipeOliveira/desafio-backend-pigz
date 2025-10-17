@@ -62,6 +62,73 @@ class Vehicle
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    public static function register(
+        string $id,
+        VehicleSpecification $specification,
+        Year $year,
+        Price $price,
+        Mileage $mileage,
+        FuelType $fuelType,
+        TransmissionType $transmission,
+        FipeCode $fipeCode,
+        string $ownerId,
+        ?VIN $vin = null,
+        ?string $description = null
+    ): self {
+        return new self(
+            $id,
+            $specification,
+            $year,
+            $price,
+            $mileage,
+            $fuelType,
+            $transmission,
+            $fipeCode,
+            $ownerId,
+            $vin,
+            $description
+        );
+    }
+
+    public static function restore(
+        string $id,
+        VehicleSpecification $specification,
+        Year $year,
+        Price $price,
+        VehicleStatus $status,
+        Mileage $mileage,
+        ?VIN $vin,
+        FuelType $fuelType,
+        TransmissionType $transmission,
+        FipeCode $fipeCode,
+        ?string $description,
+        array $images,
+        string $ownerId,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt
+    ): self {
+        $vehicle = new self(
+            $id,
+            $specification,
+            $year,
+            $price,
+            $mileage,
+            $fuelType,
+            $transmission,
+            $fipeCode,
+            $ownerId,
+            $vin,
+            $description
+        );
+
+        $vehicle->status = $status;
+        $vehicle->images = $images;
+        $vehicle->createdAt = $createdAt;
+        $vehicle->updatedAt = $updatedAt;
+
+        return $vehicle;
+    }
+
     // Getters
     public function getId(): string
     {
