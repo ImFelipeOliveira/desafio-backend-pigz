@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Entity;
 
 use DateTimeImmutable;
-use Symfony\Component\Uid\Uuid;
 
 final class User
 {
-  private Uuid $id;
+  private string $id;
   private string $email;
   private string $passwordHash;
   /** @var list<string> */
@@ -18,7 +17,7 @@ final class User
   private DateTimeImmutable $updatedAt;
 
   private function __construct(
-    Uuid $id,
+    string $id,
     string $email,
     string $passwordHash,
     array $roles,
@@ -36,22 +35,22 @@ final class User
     $this->updatedAt = $updatedAt;
   }
 
-  public static function register(string $email, string $plainPassword, array $roles = ['ROLE_USER']): self
+  public static function register(string $id, string $email, string $plainPassword, array $roles = ['ROLE_USER']): self
   {
     $now = new DateTimeImmutable();
 
     return new self(
-      Uuid::v4(),
+      $id,
       $email,
       password_hash($plainPassword, PASSWORD_ARGON2ID),
-      $roles,
+      [$roles],
       $now,
       $now,
     );
   }
 
   public static function restore(
-    Uuid $id,
+    string $id,
     string $email,
     string $passwordHash,
     array $roles,
@@ -107,7 +106,7 @@ final class User
     return password_needs_rehash($this->passwordHash, PASSWORD_ARGON2ID);
   }
 
-  public function getId(): Uuid
+  public function getId(): string
   {
     return $this->id;
   }
