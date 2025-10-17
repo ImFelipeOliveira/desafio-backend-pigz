@@ -1,115 +1,192 @@
 <?php
 
-namespace App\Entity;
+declare(strict_types=1);
 
-use App\Repository\UserRepository;
-use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+namespace App\Domain\Entity;
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '`user`')]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+use DateTimeImmutable;
+use Symfony\Component\Uid\Uuid;
+
+final class User
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+  private Uuid $id;
+  private string $email;
+  private string $passwordHash;
+  /** @var list<string> */
+  private array $roles;
+  private bool $active;
+  private DateTimeImmutable $createdAt;
+  private DateTimeImmutable $updatedAt;
 
-    #[ORM\Column(length: 180)]
-    private ?string $email = null;
+  private function __construct(
+    Uuid $id,
+    string $email,
+    string $passwordHash,
+    array $roles,
+    bool $active,
+    DateTimeImmutable $createdAt,
+    DateTimeImmutable $updatedAt,
+  ) {
+    $this->assertValidEmail($email);
+    $this->assertValidRoles($roles);
 
-    /**
-     * @var list<string> The user roles
-     */
-    #[ORM\Column]
-    private array $roles = [];
+    $this->id = $id;
+    $this->email = $email;
+    $this->passwordHash = $passwordHash;
+    $this->roles = array_values(array_unique($roles));
+    $this->active = $active;
+    $this->createdAt = $createdAt;
+    $this->updatedAt = $updatedAt;
+  }
 
-    /**
-     * @var string The hashed password
-     */
-    #[ORM\Column]
-    private ?string $password = null;
+  public static function register(string $email, string $plainPassword, array $roles = ['ROLE_USER']): self
+  {
+    $now = new DateTimeImmutable();
 
-    public function getId(): ?int
-    {
-        return $this->id;
+    return new self(
+      Uuid::v4(),
+      $email,
+      password_hash($plainPassword, PASSWORD_ARGON2ID),
+      $roles,
+      true,
+      $now,
+      $now,
+    );
+  }
+
+  public static function restore(
+    Uuid $id,
+    string $email,
+    string $passwordHash,
+    array $roles,
+    bool $active,
+    DateTimeImmutable $createdAt,
+    DateTimeImmutable $updatedAt,
+  ): self {
+    return new self($id, $email, $passwordHash, $roles, $active, $createdAt, $updatedAt);
+  }
+
+  public function changeEmail(string $newEmail): void
+  {
+    if ($newEmail === $this->email) {
+      return;
     }
 
-    public function getEmail(): ?string
-    {
-        return $this->email;
+    $this->assertValidEmail($newEmail);
+    $this->email = $newEmail;
+    $this->touch();
+  }
+
+  public function setPassword(string $plainPassword): void
+  {
+    $this->passwordHash = password_hash($plainPassword, PASSWORD_ARGON2ID);
+    $this->touch();
+  }
+
+  public function promote(string $role): void
+  {
+    if (!in_array($role, $this->roles, true)) {
+      $this->roles[] = $role;
+      $this->touch();
+    }
+  }
+
+  public function demote(string $role): void
+  {
+    $this->roles = array_values(array_filter(
+      $this->roles,
+      static fn(string $current) => $current !== $role
+    ));
+
+    $this->assertValidRoles($this->roles);
+    $this->touch();
+  }
+
+  public function deactivate(): void
+  {
+    if ($this->active) {
+      $this->active = false;
+      $this->touch();
+    }
+  }
+
+  public function activate(): void
+  {
+    if (!$this->active) {
+      $this->active = true;
+      $this->touch();
+    }
+  }
+
+  public function verifyPassword(string $plainPassword): bool
+  {
+    return password_verify($plainPassword, $this->passwordHash);
+  }
+
+  public function needsPasswordRehash(): bool
+  {
+    return password_needs_rehash($this->passwordHash, PASSWORD_ARGON2ID);
+  }
+
+  public function getId(): Uuid
+  {
+    return $this->id;
+  }
+
+  public function getEmail(): string
+  {
+    return $this->email;
+  }
+
+  public function getPasswordHash(): string
+  {
+    return $this->passwordHash;
+  }
+
+  /** @return list<string> */
+  public function getRoles(): array
+  {
+    return $this->roles;
+  }
+
+  public function isActive(): bool
+  {
+    return $this->active;
+  }
+
+  public function getCreatedAt(): DateTimeImmutable
+  {
+    return $this->createdAt;
+  }
+
+  public function getUpdatedAt(): DateTimeImmutable
+  {
+    return $this->updatedAt;
+  }
+
+  private function touch(): void
+  {
+    $this->updatedAt = new DateTimeImmutable();
+  }
+
+  private function assertValidEmail(string $email): void
+  {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      throw new \InvalidArgumentException('Invalid email address.');
+    }
+  }
+
+  /** @param list<string> $roles */
+  private function assertValidRoles(array $roles): void
+  {
+    if ($roles === []) {
+      throw new \InvalidArgumentException('User must have at least one role.');
     }
 
-    public function setEmail(string $email): static
-    {
-        $this->email = $email;
-
-        return $this;
+    foreach ($roles as $role) {
+      if (!is_string($role) || $role === '') {
+        throw new \InvalidArgumentException('Role list must contain non-empty strings.');
+      }
     }
-
-    /**
-     * A visual identifier that represents this user.
-     *
-     * @see UserInterface
-     */
-    public function getUserIdentifier(): string
-    {
-        return (string) $this->email;
-    }
-
-    /**
-     * @see UserInterface
-     */
-    public function getRoles(): array
-    {
-        $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
-    }
-
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
-
-        return $this;
-    }
-
-    /**
-     * @see PasswordAuthenticatedUserInterface
-     */
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
-
-        return $this;
-    }
-
-    /**
-     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
-     */
-    public function __serialize(): array
-    {
-        $data = (array) $this;
-        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
-
-        return $data;
-    }
-
-    #[\Deprecated]
-    public function eraseCredentials(): void
-    {
-        // @deprecated, to be removed when upgrading to Symfony 8
-    }
+  }
 }
