@@ -9,7 +9,6 @@ use App\Application\UseCase\UseCaseInterface;
 use App\Domain\Repositories\UserRepositoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Domain\Entity\User;
-use Symfony\Component\Uid\Uuid;
 
 class RegisterUseCase implements UseCaseInterface
 {
