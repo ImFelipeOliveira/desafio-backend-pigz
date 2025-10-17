@@ -73,7 +73,8 @@ class Vehicle
         FipeCode $fipeCode,
         string $ownerId,
         ?VIN $vin = null,
-        ?string $description = null
+        ?string $description = null,
+        ?array $images = null
     ): self {
         return new self(
             $id,
@@ -86,7 +87,8 @@ class Vehicle
             $fipeCode,
             $ownerId,
             $vin,
-            $description
+            $description,
+            $images ?? []
         );
     }
 

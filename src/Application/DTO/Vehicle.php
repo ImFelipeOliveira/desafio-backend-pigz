@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\DTO\Vehicle;
 
+use Symfony\Component\Security\Core\User\UserInterface;
+
 final class VehicleDTO
 {
   public function __construct(
@@ -21,7 +23,8 @@ final class VehicleDTO
     private string $fipeCode,
     private ?string $vin = null,
     private ?string $description = null,
-    private array $images = []
+    private array $images = [],
+    private ?UserInterface $owner = null
   ) {}
 
   public function getBrand(): string
@@ -97,5 +100,10 @@ final class VehicleDTO
   public function getImages(): array
   {
     return $this->images;
+  }
+
+  public function getOwner(): ?UserInterface
+  {
+    return $this->owner;
   }
 }
