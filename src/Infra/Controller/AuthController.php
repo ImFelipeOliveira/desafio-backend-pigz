@@ -16,14 +16,11 @@ final class AuthController extends AbstractController
     public function login(Request $request, LoginUseCase $loginUseCase): JsonResponse
     {
         $data = json_decode($request->getContent() ?: '{}', true);
-
         $credentials = new Credentials(
             $data['email'] ?? '',
             $data['password'] ?? ''
         );
-
         $result = $loginUseCase->execute($credentials);
-
         return $this->json($result);
     }
 }
