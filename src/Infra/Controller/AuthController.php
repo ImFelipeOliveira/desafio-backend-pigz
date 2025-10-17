@@ -15,12 +15,16 @@ final class AuthController extends AbstractController
     #[Route('/auth/login', name: 'app_auth', methods: ['POST'])]
     public function login(Request $request, LoginUseCase $loginUseCase): JsonResponse
     {
-        $data = json_decode($request->getContent() ?: '{}', true);
-        $credentials = new Credentials(
-            $data['email'] ?? '',
-            $data['password'] ?? ''
-        );
-        $result = $loginUseCase->execute($credentials);
-        return $this->json($result);
+        try {
+            $data = json_decode($request->getContent() ?: '{}', true);
+            $credentials = new Credentials(
+                $data['email'] ?? '',
+                $data['password'] ?? ''
+            );
+            $result = $loginUseCase->execute($credentials);
+            return $this->json($result);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['error' => $e->getMessage()], $e->getCode());
+        }
     }
 }
