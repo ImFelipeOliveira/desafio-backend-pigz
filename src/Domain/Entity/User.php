@@ -14,7 +14,6 @@ final class User
   private string $passwordHash;
   /** @var list<string> */
   private array $roles;
-  private bool $active;
   private DateTimeImmutable $createdAt;
   private DateTimeImmutable $updatedAt;
 
@@ -23,7 +22,6 @@ final class User
     string $email,
     string $passwordHash,
     array $roles,
-    bool $active,
     DateTimeImmutable $createdAt,
     DateTimeImmutable $updatedAt,
   ) {
@@ -34,7 +32,6 @@ final class User
     $this->email = $email;
     $this->passwordHash = $passwordHash;
     $this->roles = array_values(array_unique($roles));
-    $this->active = $active;
     $this->createdAt = $createdAt;
     $this->updatedAt = $updatedAt;
   }
@@ -48,7 +45,6 @@ final class User
       $email,
       password_hash($plainPassword, PASSWORD_ARGON2ID),
       $roles,
-      true,
       $now,
       $now,
     );
@@ -59,11 +55,10 @@ final class User
     string $email,
     string $passwordHash,
     array $roles,
-    bool $active,
     DateTimeImmutable $createdAt,
     DateTimeImmutable $updatedAt,
   ): self {
-    return new self($id, $email, $passwordHash, $roles, $active, $createdAt, $updatedAt);
+    return new self($id, $email, $passwordHash, $roles, $createdAt, $updatedAt);
   }
 
   public function changeEmail(string $newEmail): void
@@ -102,22 +97,6 @@ final class User
     $this->touch();
   }
 
-  public function deactivate(): void
-  {
-    if ($this->active) {
-      $this->active = false;
-      $this->touch();
-    }
-  }
-
-  public function activate(): void
-  {
-    if (!$this->active) {
-      $this->active = true;
-      $this->touch();
-    }
-  }
-
   public function verifyPassword(string $plainPassword): bool
   {
     return password_verify($plainPassword, $this->passwordHash);
@@ -147,11 +126,6 @@ final class User
   public function getRoles(): array
   {
     return $this->roles;
-  }
-
-  public function isActive(): bool
-  {
-    return $this->active;
   }
 
   public function getCreatedAt(): DateTimeImmutable
