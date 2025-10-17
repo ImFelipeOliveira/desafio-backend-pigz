@@ -5,6 +5,7 @@ namespace App\Infra\Persistence\Doctrine\Repository;
 use App\Domain\Entity\User as DomainUser;
 use App\Infra\Persistence\Doctrine\Entity\User;
 use App\Domain\Repositories\UserRepositoryInterface;
+use App\Infra\Persistence\Doctrine\Entity\UserEntity;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -18,7 +19,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, User::class);
+        parent::__construct($registry, UserEntity::class);
     }
 
     /**
@@ -26,7 +27,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
      */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
     {
-        if (!$user instanceof User) {
+        if (!$user instanceof UserEntity) {
             throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', $user::class));
         }
 
@@ -37,7 +38,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function save(DomainUser $user): void
     {
-        $entity = User::fromDomain($user);
+        $entity = UserEntity::fromDomain($user);
         $this->getEntityManager()->persist($entity);
         $this->getEntityManager()->flush();
     }
@@ -56,7 +57,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
 
     public function delete(DomainUser $user): void
     {
-        $entity = User::fromDomain($user);
+        $entity = UserEntity::fromDomain($user);
         $this->getEntityManager()->remove($entity);
         $this->getEntityManager()->flush();
     }
