@@ -42,7 +42,10 @@ final class AuthController extends AbstractController
                 $data['role'] ?? 'ROLE_USER'
             );
             $registerUseCase->execute($registerDto);
-            return $this->json(['message' => 'User registered successfully.'], JsonResponse::HTTP_CREATED);
+            return $this->json(
+                ['message' => 'User registered successfully.'],
+                JsonResponse::HTTP_CREATED
+            );
         } catch (\InvalidArgumentException $e) {
             return $this->json(['error' => $e->getMessage()], $e->getCode());
         }
