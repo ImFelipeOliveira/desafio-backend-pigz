@@ -25,13 +25,10 @@ class RegisterUseCase implements UseCaseInterface
     $this->verifyInputInstaceOf($input);
     $this->verifyEmailIsAvailable($input->getEmail());
     $this->comparePasswords($input->getPassword(), $input->getConfirmPassword());
-    $user = new User(
-      Uuid::v4(),
+    $user = User::register(
       $input->getEmail(),
-      password_hash($input->getPassword(), PASSWORD_ARGON2ID),
-      [$input->getRole()],
-      new \DateTimeImmutable(),
-      new \DateTimeImmutable(),
+      $input->getPassword(),
+      [$input->getRole()]
     );
 
     $this->userRepository->save($user);
