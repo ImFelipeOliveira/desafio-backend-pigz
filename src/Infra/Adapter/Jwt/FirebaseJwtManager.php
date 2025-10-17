@@ -8,7 +8,7 @@ use App\Application\Security\JwtManagerInterface;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
-use Symfony\Component\Security\Core\User\UserInterface;
+use App\Domain\Entity\User as UserDomain;
 
 class FirebaseJwtManager implements JwtManagerInterface
 {
@@ -23,13 +23,13 @@ class FirebaseJwtManager implements JwtManagerInterface
     $this->ttl = $ttl;
   }
 
-  public function createToken(UserInterface $user): string
+  public function createToken(UserDomain $user): string
   {
     $now = time();
     $payload = [
       'iat' => $now,
       'exp' => $now + $this->ttl,
-      'sub' => $user->getUserIdentifier(),
+      'sub' => $user->getEmail(),
       'roles' => $user->getRoles(),
     ];
 
