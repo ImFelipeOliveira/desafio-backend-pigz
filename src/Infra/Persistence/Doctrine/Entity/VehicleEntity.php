@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infra\Persistence\Doctrine\Entity;
 
+use App\Domain\Entity\Vehicle;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -320,7 +321,7 @@ class VehicleEntity
     $this->updatedAt = new \DateTimeImmutable();
   }
 
-  public static function fromDomain(\App\Domain\Entity\Vehicle $vehicle): self
+  public static function fromDomain(Vehicle $vehicle): self
   {
     $entity = new self();
     $entity->setBrand($vehicle->getSpecification()->getBrand());
