@@ -40,8 +40,7 @@ class FirebaseJwtManager implements JwtManagerInterface
   public function validateToken(string $token): bool
   {
     try {
-      $publicKey = file_get_contents($this->publicKeyPath);
-      JWT::decode($token, new Key($publicKey, 'RS256'));
+      $this->getPayload($token);
       return true;
     } catch (ExpiredException $e) {
       return false;
