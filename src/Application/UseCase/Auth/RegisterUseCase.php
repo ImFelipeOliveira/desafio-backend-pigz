@@ -17,7 +17,7 @@ class RegisterUseCase implements UseCaseInterface
     private UserRepositoryInterface $userRepository
   ) {}
   /**
-   * @param Register $input
+   * @param Register|mixed $input
    */
   public function execute(mixed $input): array
   {
@@ -27,7 +27,7 @@ class RegisterUseCase implements UseCaseInterface
     $user = User::register(
       $input->getEmail(),
       $input->getPassword(),
-      [$input->getRole()]
+      $input->getRole()
     );
 
     $this->userRepository->save($user);
