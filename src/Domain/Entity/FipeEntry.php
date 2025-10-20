@@ -160,6 +160,25 @@ class FipeEntry
         $this->updatedAt = new \DateTimeImmutable();
     }
 
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id->toString(),
+            'fipeCode' => $this->fipeCode->getCode(),
+            'brand' => $this->specification->getBrand(),
+            'model' => $this->specification->getModel(),
+            'category' => $this->specification->getCategory(),
+            'version' => $this->specification->getVersion(),
+            'fuelType' => $this->fuelType->value,
+            'price' => $this->price->getValue(),
+            'currency' => $this->price->getCurrency(),
+            'referenceMonth' => $this->referenceMonth->format(),
+            'modelYear' => $this->modelYear,
+            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
+            'updatedAt' => $this->updatedAt?->format('Y-m-d H:i:s'),
+        ];
+    }
+
     public function __toString(): string
     {
         return sprintf(
