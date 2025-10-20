@@ -359,6 +359,32 @@ class Vehicle
         return $this->specification->getCategory() === $other->specification->getCategory();
     }
 
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'brand' => $this->specification->getBrand(),
+            'model' => $this->specification->getModel(),
+            'version' => $this->specification->getVersion(),
+            'category' => $this->specification->getCategory(),
+            'year' => $this->year->getValue(),
+            'priceValue' => $this->price->getValue(),
+            'priceCurrency' => $this->price->getCurrency(),
+            'mileageValue' => $this->mileage->getKilometers(),
+            'mileageUnit' => 'km',
+            'fuelType' => $this->fuelType->value,
+            'transmission' => $this->transmission->value,
+            'fipeCode' => $this->fipeCode->getCode(),
+            'status' => $this->status->value,
+            'vin' => $this->vin?->getNumber(),
+            'description' => $this->description,
+            'images' => $this->images,
+            'ownerId' => $this->ownerId,
+            'createdAt' => $this->createdAt->format('Y-m-d H:i:s'),
+            'updatedAt' => $this->updatedAt->format('Y-m-d H:i:s'),
+        ];
+    }
+
     private function canUpdatePrice(): bool
     {
         return in_array($this->status, [
