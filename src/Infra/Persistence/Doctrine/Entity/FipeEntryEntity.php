@@ -58,17 +58,16 @@ class FipeEntryEntity
   #[ORM\Column(type: 'datetime_immutable', nullable: true)]
   private ?\DateTimeImmutable $updatedAt;
 
-  public function __construct()
+  public function __construct(?string $id = null)
   {
-    $this->id = Uuid::v4()->toRfc4122();
+    $this->id = $id ?? Uuid::v4()->toRfc4122();
     $this->createdAt = new \DateTimeImmutable();
     $this->updatedAt = null;
   }
 
   public static function fromDomain(FipeEntry $fipe): self
   {
-    $entity = new self();
-    $entity->id = $fipe->getId()->toRfc4122();
+    $entity = new self($fipe->getId()->toRfc4122());
     $entity->fipeCode = $fipe->getFipeCode()->getCode();
 
     $spec = $fipe->getSpecification();

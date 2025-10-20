@@ -68,8 +68,8 @@ class FipeController extends AbstractController
         $data['category'] ?? 'car',
         $data['version'] ?? null,
         $data['fuelType'] ?? 'gasoline',
-        (float) ($data['price'] ?? 0),
-        $data['currency'] ?? 'BRL',
+        (float) ($data['priceValue'] ?? 0),
+        $data['priceCurrency'] ?? 'BRL',
         $data['referenceMonth'] ?? date('Y-m'),
         (int) ($data['modelYear'] ?? date('Y'))
       );
