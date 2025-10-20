@@ -28,10 +28,15 @@ class VehicleRepository extends ServiceEntityRepository implements VehicleReposi
 
   public function update(Vehicle $vehicle): void
   {
-    $entity = VehicleEntity::fromDomain($vehicle);
-    $entitySaved = $this->getEntityManager()->find(VehicleEntity::class, $entity->getId());
-    $entitySaved->update($entity);
-    $this->getEntityManager()->persist($entitySaved);
+    $entityToUpdate = VehicleEntity::fromDomain($vehicle);
+    $existingEntity = $this->getEntityManager()->find(VehicleEntity::class, $entityToUpdate->getId());
+
+    if (!$existingEntity) {
+      throw new \RuntimeException('Vehicle not found for update');
+    }
+
+    $existingEntity->updateFrom($entityToUpdate);
+    $this->getEntityManager()->persist($existingEntity);
     $this->getEntityManager()->flush();
   }
 
