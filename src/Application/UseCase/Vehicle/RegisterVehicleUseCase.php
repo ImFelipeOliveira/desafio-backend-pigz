@@ -37,7 +37,7 @@ class RegisterVehicleUseCase implements UseCaseInterface
     $user = $this->userRepository->findByEmail($input->getOwner()->getUserIdentifier());
     $vehicle = $this->buildVehicleEntity($input, $user->getId());
     $this->vehicleRepository->save($vehicle);
-    return [$vehicle];
+    return [$vehicle->toArray()];
   }
 
   private function verifyInputInstanceOf(mixed $input): void
@@ -69,11 +69,11 @@ class RegisterVehicleUseCase implements UseCaseInterface
         new Year($input->getYear()),
         new Price($input->getPriceValue()),
         new Mileage($input->getMileageValue()),
-        new FuelType($input->getFuelType()),
-        new TransmissionType($input->getTransmission()),
+        FuelType::from($input->getFuelType()),
+        TransmissionType::from($input->getTransmission()),
         new FipeCode($input->getFipeCode()),
         $userId,
-        new VIN($input->getVin()),
+        $input->getVin() ? new VIN($input->getVin()) : null,
         $input->getDescription(),
         $input->getImages()
       );

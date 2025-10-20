@@ -14,6 +14,8 @@ interface VehicleRepositoryInterface
 {
   public function save(Vehicle $vehicle): void;
 
+  public function getAll(int $page, int $limit, array $filters = []): array;
+
   public function update(Vehicle $vehicle): void;
 
   public function findById(string $id): ?Vehicle;
@@ -39,4 +41,20 @@ interface VehicleRepositoryInterface
   public function countByOwnerId(string $ownerId): int;
 
   public function countByStatus(VehicleStatus $status): int;
+
+  /**
+   * Find vehicles by filters with pagination
+   * @param array $filters Filtros como brand, model, price_min, price_max, year_min, year_max, fuelType
+   * @param int $page Página atual
+   * @param int $limit Itens por página
+   * @return Vehicle[]
+   */
+  public function findByFilters(array $filters, int $page, int $limit): array;
+
+  /**
+   * Count vehicles by filters
+   * @param array $filters Filtros como brand, model, price_min, price_max, year_min, year_max, fuelType
+   * @return int
+   */
+  public function countByFilters(array $filters): int;
 }
