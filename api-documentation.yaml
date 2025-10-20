@@ -1,0 +1,724 @@
+openapi: 3.0.0
+info:
+    title: PIGZ Backend API
+    description: |
+        API REST para gerenciamento de veículos com integração FIPE e sistema de ACL.
+
+        ## Autenticação
+        A API utiliza JWT (JSON Web Token) para autenticação. 
+        Após o login, inclua o token no header: `Authorization: Bearer {token}`
+
+        ## Roles
+        - **ROLE_USER**: Usuário comum (pode gerenciar seus próprios veículos)
+        - **ROLE_ADMIN**: Administrador (acesso total, incluindo FIPE)
+    version: 1.0.0
+    contact:
+        name: API Support
+        email: admin@pigz.com
+
+servers:
+    - url: http://localhost:8080/api
+      description: Servidor de Desenvolvimento
+
+tags:
+    - name: Authentication
+      description: Endpoints de autenticação (login e registro)
+    - name: Vehicles
+      description: Gerenciamento de veículos
+    - name: FIPE
+      description: Tabela FIPE e comparação de preços
+    - name: Comparison
+      description: Comparação de veículos com valores FIPE
+
+components:
+    securitySchemes:
+        BearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: "Token JWT obtido no endpoint /auth/login"
+
+    schemas:
+        User:
+            type: object
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                email:
+                    type: string
+                    format: email
+                confirmPassword:
+                    type: string
+                    format: password
+                roles:
+                    type: array
+                    items:
+                        type: string
+                        enum: [ROLE_USER, ROLE_ADMIN]
+
+        Vehicle:
+            type: object
+            required:
+                - brand
+                - model
+                - year
+                - price
+                - fipeCode
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                brand:
+                    type: string
+                    example: "Chevrolet"
+                model:
+                    type: string
+                    example: "ONIX"
+                version:
+                    type: string
+                    example: "1.0 Turbo Premier"
+                category:
+                    type: string
+                    enum:
+                        [
+                            SUV,
+                            Sedan,
+                            Hatch,
+                            Pickup,
+                            Coupe,
+                            Convertible,
+                            Wagon,
+                            Van,
+                            Motorcycle,
+                        ]
+                    example: "Hatch"
+                year:
+                    type: integer
+                    example: 2024
+                priceValue:
+                    type: number
+                    format: float
+                    example: 85000.00
+                priceCurrency:
+                    type: string
+                    default: "BRL"
+                    example: "BRL"
+                mileageValue:
+                    type: integer
+                    example: 15000
+                mileageUnit:
+                    type: string
+                    default: "km"
+                    example: "km"
+                fuelType:
+                    type: string
+                    enum: [gasoline, ethanol, flex, diesel, electric, hybrid]
+                    example: "gasoline"
+                transmission:
+                    type: string
+                    enum: [manual, automatic, semi-automatic]
+                    example: "automatic"
+                fipeCode:
+                    type: string
+                    example: "001004-1"
+                vin:
+                    type: string
+                    nullable: true
+                description:
+                    type: string
+                    nullable: true
+                images:
+                    type: array
+                    items:
+                        type: string
+                    default: []
+                ownerId:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                createdAt:
+                    type: string
+                    format: date-time
+                    readOnly: true
+                updatedAt:
+                    type: string
+                    format: date-time
+                    readOnly: true
+
+        FipeEntry:
+            type: object
+            required:
+                - fipeCode
+                - brand
+                - model
+                - category
+                - fuelType
+                - price
+                - referenceMonth
+                - modelYear
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                    readOnly: true
+                fipeCode:
+                    type: string
+                    example: "001004-1"
+                brand:
+                    type: string
+                    example: "Chevrolet"
+                model:
+                    type: string
+                    example: "ONIX"
+                category:
+                    type: string
+                    enum:
+                        [
+                            SUV,
+                            Sedan,
+                            Hatch,
+                            Pickup,
+                            Coupe,
+                            Convertible,
+                            Wagon,
+                            Van,
+                            Motorcycle,
+                        ]
+                    example: "Hatch"
+                version:
+                    type: string
+                    nullable: true
+                    example: "1.0 Turbo Premier"
+                fuelType:
+                    type: string
+                    enum: [gasoline, ethanol, flex, diesel, electric, hybrid]
+                    example: "gasoline"
+                price:
+                    type: number
+                    format: float
+                    example: 85000.00
+                currency:
+                    type: string
+                    default: "BRL"
+                referenceMonth:
+                    type: string
+                    pattern: '^\d{4}-\d{2}$'
+                    example: "2024-10"
+                modelYear:
+                    type: integer
+                    example: 2024
+                createdAt:
+                    type: string
+                    format: date-time
+                    readOnly: true
+
+        VehicleComparison:
+            type: object
+            properties:
+                vehicleId:
+                    type: string
+                    format: uuid
+                vehiclePrice:
+                    type: number
+                    format: float
+                fipePrice:
+                    type: number
+                    format: float
+                difference:
+                    type: number
+                    format: float
+                    description: "Diferença em valor absoluto"
+                percentageDifference:
+                    type: number
+                    format: float
+                    description: "Diferença em percentual"
+                status:
+                    type: string
+                    enum: [below_fipe, within_fipe, above_fipe]
+                    description: |
+                        - below_fipe: Veículo abaixo da tabela FIPE
+                        - within_fipe: Veículo dentro da margem aceitável
+                        - above_fipe: Veículo acima da tabela FIPE
+                recommendation:
+                    type: string
+                    example: "Preço 5% abaixo da FIPE - boa oportunidade!"
+
+        Error:
+            type: object
+            properties:
+                error:
+                    type: string
+                    example: "Invalid credentials"
+
+        PaginatedResponse:
+            type: object
+            properties:
+                data:
+                    type: array
+                    items: {}
+                pagination:
+                    type: object
+                    properties:
+                        page:
+                            type: integer
+                            example: 1
+                        limit:
+                            type: integer
+                            example: 10
+                        total:
+                            type: integer
+                            example: 100
+                        totalPages:
+                            type: integer
+                            example: 10
+
+paths:
+    # ==================== AUTHENTICATION ====================
+    /auth/login:
+        post:
+            tags:
+                - Authentication
+            summary: Fazer login
+            description: Autentica um usuário e retorna um token JWT
+            operationId: login
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - email
+                                - password
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                    example: "admin@pigz.com"
+                                password:
+                                    type: string
+                                    format: password
+                                    example: "admin123"
+            responses:
+                "200":
+                    description: Login bem-sucedido
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    token:
+                                        type: string
+                                        example: "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                "401":
+                    description: Credenciais inválidas
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+
+    /auth/register:
+        post:
+            tags:
+                - Authentication
+            summary: Registrar novo usuário
+            description: Cria uma nova conta de usuário
+            operationId: register
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - email
+                                - password
+                                - role
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                    example: "user@example.com"
+                                password:
+                                    type: string
+                                    format: password
+                                    example: "senha123"
+                                confirmPassword:
+                                    type: string
+                                    format: password
+                                    example: "senha123"
+                                role:
+                                    type: string
+                                    enum: [ROLE_USER, ROLE_ADMIN]
+                                    default: ROLE_USER
+                                    example: "ROLE_USER"
+            responses:
+                "201":
+                    description: Usuário criado com sucesso
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message:
+                                        type: string
+                                        example: "User registered successfully."
+                "400":
+                    description: Dados inválidos
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+
+    # ==================== VEHICLES ====================
+    /vehicles:
+        get:
+            tags:
+                - Vehicles
+            summary: Listar veículos
+            description: Lista todos os veículos com filtros e paginação
+            operationId: listVehicles
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                      default: 1
+                      minimum: 1
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      default: 10
+                      minimum: 1
+                      maximum: 100
+                - name: brand
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por marca
+                - name: model
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por modelo
+                - name: price_min
+                  in: query
+                  schema:
+                      type: number
+                  description: Preço mínimo
+                - name: price_max
+                  in: query
+                  schema:
+                      type: number
+                  description: Preço máximo
+                - name: year_min
+                  in: query
+                  schema:
+                      type: integer
+                  description: Ano mínimo
+                - name: year_max
+                  in: query
+                  schema:
+                      type: integer
+                  description: Ano máximo
+                - name: fuelType
+                  in: query
+                  schema:
+                      type: string
+                      enum: [gasoline, ethanol, flex, diesel, electric, hybrid]
+                  description: Tipo de combustível
+            responses:
+                "200":
+                    description: Lista de veículos
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/PaginatedResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: "#/components/schemas/Vehicle"
+                "401":
+                    description: Não autenticado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+
+        post:
+            tags:
+                - Vehicles
+            summary: Criar veículo
+            description: Cria um novo veículo (requer autenticação)
+            operationId: createVehicle
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Vehicle"
+            responses:
+                "201":
+                    description: Veículo criado com sucesso
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Vehicle"
+                "400":
+                    description: Dados inválidos
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+                "401":
+                    description: Não autenticado
+                "403":
+                    description: Sem permissão
+
+    /vehicles/{id}:
+        get:
+            tags:
+                - Vehicles
+            summary: Obter veículo por ID
+            description: Retorna detalhes de um veículo específico
+            operationId: getVehicle
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+            responses:
+                "200":
+                    description: Detalhes do veículo
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Vehicle"
+                "404":
+                    description: Veículo não encontrado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Error"
+
+        put:
+            tags:
+                - Vehicles
+            summary: Atualizar veículo
+            description: Atualiza um veículo existente (apenas o proprietário ou admin)
+            operationId: updateVehicle
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/Vehicle"
+            responses:
+                "200":
+                    description: Veículo atualizado
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/Vehicle"
+                "403":
+                    description: Sem permissão para editar este veículo
+                "404":
+                    description: Veículo não encontrado
+
+        delete:
+            tags:
+                - Vehicles
+            summary: Deletar veículo
+            description: Remove um veículo (apenas o proprietário ou admin)
+            operationId: deleteVehicle
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+            responses:
+                "204":
+                    description: Veículo deletado com sucesso
+                "403":
+                    description: Sem permissão para deletar este veículo
+                "404":
+                    description: Veículo não encontrado
+
+    # ==================== VEHICLE COMPARISON ====================
+    /vehicles/{id}/compare:
+        get:
+            tags:
+                - Comparison
+            summary: Comparar veículo com FIPE
+            description: Compara o preço do veículo com a tabela FIPE
+            operationId: compareVehicle
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      format: uuid
+            responses:
+                "200":
+                    description: Comparação realizada
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/VehicleComparison"
+                "404":
+                    description: Veículo ou dados FIPE não encontrados
+
+    # ==================== FIPE ====================
+    /fipe:
+        get:
+            tags:
+                - FIPE
+            summary: Listar entradas FIPE
+            description: Lista todas as entradas da tabela FIPE
+            operationId: listFipe
+            security:
+                - BearerAuth: []
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                      type: integer
+                      default: 1
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                      default: 10
+                - name: fipeCode
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por código FIPE
+                - name: brand
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por marca
+                - name: model
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por modelo
+                - name: referenceMonth
+                  in: query
+                  schema:
+                      type: string
+                  description: Filtrar por mês de referência (YYYY-MM)
+            responses:
+                "200":
+                    description: Lista de entradas FIPE
+                    content:
+                        application/json:
+                            schema:
+                                allOf:
+                                    - $ref: "#/components/schemas/PaginatedResponse"
+                                    - type: object
+                                      properties:
+                                          data:
+                                              type: array
+                                              items:
+                                                  $ref: "#/components/schemas/FipeEntry"
+
+        post:
+            tags:
+                - FIPE
+            summary: Registrar entrada FIPE
+            description: Cria uma nova entrada na tabela FIPE (apenas admin)
+            operationId: createFipeEntry
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/FipeEntry"
+            responses:
+                "201":
+                    description: Entrada FIPE criada
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: "#/components/schemas/FipeEntry"
+                "403":
+                    description: Apenas admins podem criar entradas FIPE
+
+    /fipe/sync:
+        post:
+            tags:
+                - FIPE
+            summary: Sincronizar com API FIPE
+            description: Sincroniza dados com a API externa da FIPE (apenas admin)
+            operationId: syncFipe
+            security:
+                - BearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - vehicleType
+                                - brandCode
+                                - modelCode
+                                - yearCode
+                            properties:
+                                vehicleType:
+                                    type: string
+                                    enum: [carros, motos, caminhoes]
+                                    example: "carros"
+                                brandCode:
+                                    type: string
+                                    example: "1"
+                                modelCode:
+                                    type: string
+                                    example: "5"
+                                yearCode:
+                                    type: string
+                                    example: "2024-1"
+            responses:
+                "201":
+                    description: Sincronização realizada
+                "403":
+                    description: Apenas admins podem sincronizar
+
+security:
+    - BearerAuth: []
