@@ -35,6 +35,6 @@ class GetVehicleUseCase implements UseCaseInterface
       );
     }
 
-    return [$vehicle];
+    return [$vehicle->toArray()];
   }
 }
