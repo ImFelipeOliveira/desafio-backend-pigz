@@ -6,8 +6,14 @@ namespace App\Application\UseCase\Vehicle;
 
 use App\Application\DTO\Vehicle\VehicleDTO;
 use App\Application\UseCase\UseCaseInterface;
+use App\Domain\Entity\ValueObjects\FipeCode;
+use App\Domain\Entity\ValueObjects\FuelType;
 use App\Domain\Entity\ValueObjects\Mileage;
 use App\Domain\Entity\ValueObjects\Price;
+use App\Domain\Entity\ValueObjects\TransmissionType;
+use App\Domain\Entity\ValueObjects\VehicleSpecification;
+use App\Domain\Entity\ValueObjects\VIN;
+use App\Domain\Entity\ValueObjects\Year;
 use App\Domain\Repositories\VehicleRepositoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -79,6 +85,68 @@ class UpdateVehicleUseCase implements UseCaseInterface
     $this->updateMileage($vehicle, $dto);
     $this->updateDescription($vehicle, $dto);
     $this->updateImages($vehicle, $dto);
+    $this->updateSpecification($vehicle, $dto);
+    $this->updateYear($vehicle, $dto);
+    $this->updateFuelType($vehicle, $dto);
+    $this->updateTransmission($vehicle, $dto);
+    $this->updateFipeCode($vehicle, $dto);
+    $this->updateVin($vehicle, $dto);
+  }
+
+  private function updateSpecification($vehicle, VehicleDTO $dto): void
+  {
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('specification');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, new VehicleSpecification(
+      $dto->getBrand(),
+      $dto->getModel(),
+      $dto->getCategory(),
+      $dto->getVersion()
+    ));
+  }
+
+  private function updateYear($vehicle, VehicleDTO $dto): void
+  {
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('year');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, new Year($dto->getYear()));
+  }
+
+  private function updateFuelType($vehicle, VehicleDTO $dto): void
+  {
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('fuelType');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, FuelType::from($dto->getFuelType()));
+  }
+
+  private function updateTransmission($vehicle, VehicleDTO $dto): void
+  {
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('transmission');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, TransmissionType::from($dto->getTransmission()));
+  }
+
+  private function updateFipeCode($vehicle, VehicleDTO $dto): void
+  {
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('fipeCode');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, new FipeCode($dto->getFipeCode()));
+  }
+
+  private function updateVin($vehicle, VehicleDTO $dto): void
+  {
+    if (!$dto->getVin()) {
+      return;
+    }
+    $reflection = new \ReflectionClass($vehicle);
+    $property = $reflection->getProperty('vin');
+    $property->setAccessible(true);
+    $property->setValue($vehicle, new VIN($dto->getVin()));
   }
 
   private function updatePrice($vehicle, VehicleDTO $dto): void
