@@ -26,7 +26,10 @@ final class AuthController extends AbstractController
             $result = $loginUseCase->execute($credentials);
             return $this->json($result);
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getCode());
+            return $this->json(
+                ['error' => $e->getMessage()],
+                JsonResponse::HTTP_UNAUTHORIZED
+            );
         }
     }
 
@@ -47,7 +50,10 @@ final class AuthController extends AbstractController
                 JsonResponse::HTTP_CREATED
             );
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['error' => $e->getMessage()], $e->getCode());
+            return $this->json(
+                ['error' => $e->getMessage()],
+                JsonResponse::HTTP_BAD_REQUEST
+            );
         }
     }
 }
