@@ -150,8 +150,8 @@ class UserEntity implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function toDomain(): DomainUser
     {
-        return new DomainUser(
-            $this->id !== null ? Uuid::fromString((string) $this->id) : null,
+        return DomainUser::restore(
+            (string) ($this->id ?? ''),
             (string) $this->email,
             (string) $this->password,
             $this->roles,
