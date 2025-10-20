@@ -9,6 +9,7 @@ use App\Application\UseCase\Vehicle\GetVehicleUseCase;
 use App\Application\UseCase\Vehicle\ListVehiclesUseCase;
 use App\Application\UseCase\Vehicle\RegisterVehicleUseCase;
 use App\Application\UseCase\Vehicle\UpdateVehicleUseCase;
+use App\Domain\Repositories\VehicleRepositoryInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -68,11 +69,10 @@ class VehicleController extends AbstractController
   }
 
   #[Route('/vehicles/{id}', name: 'app_update_vehicle', methods: ['PUT', 'PATCH'])]
-  public function update(string $id, Request $request, UpdateVehicleUseCase $updateVehicleUseCase, GetVehicleUseCase $getVehicleUseCase): JsonResponse
+  public function update(string $id, Request $request, UpdateVehicleUseCase $updateVehicleUseCase, VehicleRepositoryInterface $vehicleRepository): JsonResponse
   {
     try {
-      $vehicleResult = $getVehicleUseCase->execute($id);
-      $vehicle = $vehicleResult[0] ?? null;
+      $vehicle = $vehicleRepository->findById($id);
       if (!$vehicle) {
         return $this->json(['error' => 'Vehicle not found'], JsonResponse::HTTP_NOT_FOUND);
       }
@@ -88,11 +88,10 @@ class VehicleController extends AbstractController
   }
 
   #[Route('/vehicles/{id}', name: 'app_delete_vehicle', methods: ['DELETE'])]
-  public function delete(string $id, DeleteVehicleUseCase $deleteVehicleUseCase, GetVehicleUseCase $getVehicleUseCase): JsonResponse
+  public function delete(string $id, DeleteVehicleUseCase $deleteVehicleUseCase, VehicleRepositoryInterface $vehicleRepository): JsonResponse
   {
     try {
-      $vehicleResult = $getVehicleUseCase->execute($id);
-      $vehicle = $vehicleResult[0] ?? null;
+      $vehicle = $vehicleRepository->findById($id);
       if (!$vehicle) {
         return $this->json(['error' => 'Vehicle not found'], JsonResponse::HTTP_NOT_FOUND);
       }
@@ -123,9 +122,9 @@ class VehicleController extends AbstractController
       version: $data['version'] ?? '',
       category: $data['category'] ?? 'car',
       year: (int)($data['year'] ?? 0),
-      priceValue: (float)($data['price'] ?? 0),
-      priceCurrency: $data['currency'] ?? 'BRL',
-      mileageValue: (int)($data['mileage'] ?? 0),
+      priceValue: (float)($data['priceValue'] ?? 0),
+      priceCurrency: $data['priceCurrency'] ?? 'BRL',
+      mileageValue: (int)($data['mileageValue'] ?? 0),
       mileageUnit: 'km',
       fuelType: $data['fuelType'] ?? 'gasoline',
       transmission: $data['transmission'] ?? 'manual',
