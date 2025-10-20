@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace App\Infra\Persistence\Doctrine\Entity;
 
+use App\Domain\Entity\ValueObjects\Mileage;
+use App\Domain\Entity\ValueObjects\Price;
+use App\Domain\Entity\ValueObjects\VehicleStatus;
+use App\Domain\Entity\ValueObjects\VIN;
+use App\Domain\Entity\ValueObjects\Year;
+use App\Domain\Entity\ValueObjects\FuelType;
+use App\Domain\Entity\ValueObjects\TransmissionType;
+use App\Domain\Entity\ValueObjects\FipeCode;
 use App\Domain\Entity\Vehicle;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -321,6 +329,26 @@ class VehicleEntity
     $this->updatedAt = new \DateTimeImmutable();
   }
 
+  public function updateFrom(self $entity): void
+  {
+    $this->brand = $entity->getBrand();
+    $this->model = $entity->getModel();
+    $this->version = $entity->getVersion();
+    $this->category = $entity->getCategory();
+    $this->year = $entity->getYear();
+    $this->priceValue = $entity->getPriceValue();
+    $this->priceCurrency = $entity->getPriceCurrency();
+    $this->status = $entity->getStatus();
+    $this->mileage = $entity->getMileage();
+    $this->vin = $entity->getVin();
+    $this->fuelType = $entity->getFuelType();
+    $this->transmission = $entity->getTransmission();
+    $this->fipeCode = $entity->getFipeCode();
+    $this->description = $entity->getDescription();
+    $this->images = $entity->getImages();
+    $this->updatedAt = new \DateTimeImmutable();
+  }
+
   public static function fromDomain(Vehicle $vehicle): self
   {
     $entity = new self($vehicle->getId());
@@ -343,5 +371,31 @@ class VehicleEntity
     $entity->createdAt = $vehicle->getCreatedAt();
     $entity->updatedAt = $vehicle->getUpdatedAt();
     return $entity;
+  }
+
+  public function toDomain(): Vehicle
+  {
+    return Vehicle::restore(
+      $this->id,
+      new \App\Domain\Entity\ValueObjects\VehicleSpecification(
+        $this->brand,
+        $this->model,
+        $this->category,
+        $this->version
+      ),
+      new Year($this->year),
+      new Price($this->priceValue, $this->priceCurrency),
+      VehicleStatus::from($this->status),
+      new Mileage($this->mileage),
+      $this->vin ? new VIN($this->vin) : null,
+      FuelType::from($this->fuelType),
+      TransmissionType::from($this->transmission),
+      new FipeCode($this->fipeCode),
+      $this->description,
+      $this->images,
+      $this->ownerId,
+      $this->createdAt,
+      $this->updatedAt
+    );
   }
 }
