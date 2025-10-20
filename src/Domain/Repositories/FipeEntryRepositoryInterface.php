@@ -57,4 +57,22 @@ interface FipeEntryRepositoryInterface
     YearMonth $fromMonth,
     YearMonth $toMonth
   ): ?float;
+
+  /**
+   * Busca todas as entradas FIPE com paginação e filtros
+   * 
+   * @param int $page Número da página
+   * @param int $limit Limite de resultados por página
+   * @param array $filters Filtros opcionais (fipeCode, brand, model, referenceMonth)
+   * @return array Array de FipeEntry
+   */
+  public function getAll(int $page, int $limit, array $filters = []): array;
+
+  /**
+   * Conta o total de entradas FIPE com filtros aplicados
+   * 
+   * @param array $filters Filtros opcionais (fipeCode, brand, model, referenceMonth)
+   * @return int Total de registros
+   */
+  public function countAll(array $filters = []): int;
 }
