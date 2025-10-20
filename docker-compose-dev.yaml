@@ -44,15 +44,6 @@ services:
     networks:
       - symfony
 
-  redis:
-    image: redis:alpine
-    container_name: symfony_redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    networks:
-      - symfony
-
 networks:
   symfony:
     driver: bridge
