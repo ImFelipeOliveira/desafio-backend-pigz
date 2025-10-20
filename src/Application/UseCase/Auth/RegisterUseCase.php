@@ -9,6 +9,7 @@ use App\Application\UseCase\UseCaseInterface;
 use App\Domain\Repositories\UserRepositoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Domain\Entity\User;
+use Symfony\Component\Uid\Uuid;
 
 class RegisterUseCase implements UseCaseInterface
 {
@@ -25,9 +26,10 @@ class RegisterUseCase implements UseCaseInterface
     $this->verifyEmailIsAvailable($input->getEmail());
     $this->comparePasswords($input->getPassword(), $input->getConfirmPassword());
     $user = User::register(
+      (string) Uuid::v7(),
       $input->getEmail(),
       $input->getPassword(),
-      $input->getRole()
+      [$input->getRole()]
     );
 
     $this->userRepository->save($user);
