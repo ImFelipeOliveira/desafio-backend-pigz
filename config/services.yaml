@@ -20,6 +20,15 @@ services:
         alias: App\Infra\Persistence\Doctrine\Repository\UserRepository
         public: false
 
+    App\Domain\Repositories\VehicleRepositoryInterface:
+        alias: App\Infra\Persistence\Doctrine\Repository\VehicleRepository
+        public: false
+
+    App\Domain\Repositories\FipeEntryRepositoryInterface:
+        alias: App\Infra\Persistence\Doctrine\Repository\FipeEntryRepository
+        public: false
+
+    # JWT Manager
     App\Infra\Adapter\Jwt\FirebaseJwtManager:
         arguments:
             $privateKeyPath: "%env(resolve:JWT_PRIVATE_KEY_PATH)%"
@@ -28,10 +37,30 @@ services:
 
     App\Application\Security\JwtManagerInterface: '@App\Infra\Adapter\Jwt\FirebaseJwtManager'
 
+    # FIPE Service (API adapter)
+    App\Domain\Services\FipeServiceInterface:
+        alias: App\Infra\Adapter\Fipe\FipeApiClient
+        public: false
+
+    # HTTP Client for FIPE API
+    App\Infra\Adapter\Fipe\FipeApiClient:
+        arguments:
+            $httpClient: "@http_client"
+            $logger: "@logger"
+
+    # Use Cases
     App\Application\UseCase\:
         resource: "../src/Application/UseCase/*"
         autowire: true
         autoconfigure: true
         public: false
+
+    # Voters (autoconfigured automatically, but can be explicit if needed)
+    App\Infra\Security\Voter\:
+        resource: "../src/Infra/Security/Voter/*"
+        autowire: true
+        autoconfigure: true
+        tags: ["security.voter"]
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
