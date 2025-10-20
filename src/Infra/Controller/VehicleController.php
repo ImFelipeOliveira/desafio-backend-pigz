@@ -71,23 +71,16 @@ class VehicleController extends AbstractController
   public function update(string $id, Request $request, UpdateVehicleUseCase $updateVehicleUseCase, GetVehicleUseCase $getVehicleUseCase): JsonResponse
   {
     try {
-      // Buscar veículo para verificar permissão
       $vehicleResult = $getVehicleUseCase->execute($id);
       $vehicle = $vehicleResult[0] ?? null;
-
       if (!$vehicle) {
         return $this->json(['error' => 'Vehicle not found'], JsonResponse::HTTP_NOT_FOUND);
       }
-
-      // Verificar ACL via Voter
       $this->denyAccessUnlessGranted('VEHICLE_EDIT', $vehicle);
-
       $data = json_decode($request->getContent() ?: '{}', true);
       $currentUser = $this->getUser();
-
       $vehicleDto = $this->buildVehicleDTO($data, $currentUser);
       $result = $updateVehicleUseCase->execute(['id' => $id, 'data' => $vehicleDto]);
-
       return $this->json($result);
     } catch (\InvalidArgumentException $e) {
       return $this->json(['error' => $e->getMessage()], $e->getCode() ?: JsonResponse::HTTP_BAD_REQUEST);
@@ -98,17 +91,12 @@ class VehicleController extends AbstractController
   public function delete(string $id, DeleteVehicleUseCase $deleteVehicleUseCase, GetVehicleUseCase $getVehicleUseCase): JsonResponse
   {
     try {
-      // Buscar veículo para verificar permissão
       $vehicleResult = $getVehicleUseCase->execute($id);
       $vehicle = $vehicleResult[0] ?? null;
-
       if (!$vehicle) {
         return $this->json(['error' => 'Vehicle not found'], JsonResponse::HTTP_NOT_FOUND);
       }
-
-      // Verificar ACL via Voter
       $this->denyAccessUnlessGranted('VEHICLE_DELETE', $vehicle);
-
       $result = $deleteVehicleUseCase->execute($id);
       return $this->json($result);
     } catch (\InvalidArgumentException $e) {
