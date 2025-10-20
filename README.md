@@ -194,6 +194,384 @@ composer migrate
 docker compose exec app php bin/console doctrine:migrations:migrate prev
 ```
 
+## API Endpoints
+
+### Autenticação
+
+#### POST `/api/auth/register`
+
+Criar novo usuário
+
+**Request:**
+
+```json
+{
+    "email": "user@example.com",
+    "password": "senha123",
+    "confirmPassword": "senha123",
+    "roles": ["ROLE_USER"] // Opcional, default: ROLE_USER
+}
+```
+
+**Response (201):**
+
+```json
+{
+    "id": "uuid",
+    "email": "user@example.com",
+    "roles": ["ROLE_USER"]
+}
+```
+
+#### POST `/api/auth/login`
+
+Autenticar usuário
+
+**Request:**
+
+```json
+{
+    "email": "admin@pigz.com",
+    "password": "admin123"
+}
+```
+
+**Response (200):**
+
+```json
+{
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+---
+
+### Veículos (Vehicles)
+
+#### POST `/api/vehicles`
+
+Criar anúncio de veículo (Requer: `ROLE_ADMIN`)
+
+**Headers:**
+
+```
+Authorization: Bearer {token}
+```
+
+**Request:**
+
+```json
+{
+    "brand": "Toyota",
+    "model": "Corolla",
+    "version": "XEI 2.0",
+    "category": "sedan",
+    "year": 2020,
+    "price": 85000.0,
+    "currency": "BRL",
+    "mileage": 45000,
+    "fuelType": "flex",
+    "transmission": "automatic",
+    "fipeCode": "001004-1",
+    "vin": "1HGBH41JXMN109186",
+    "description": "Veículo em ótimo estado, único dono",
+    "images": ["https://example.com/img1.jpg"]
+}
+```
+
+**Response (201):**
+
+```json
+[
+  {
+    "id": "uuid",
+    "brand": "Toyota",
+    "model": "Corolla",
+    ...
+  }
+]
+```
+
+#### GET `/api/vehicles`
+
+Listar veículos com filtros e paginação
+
+**Query Parameters:**
+
+-   `page` (int, default: 1)
+-   `limit` (int, default: 10, max: 100)
+-   `brand` (string)
+-   `model` (string)
+-   `price_min` (float)
+-   `price_max` (float)
+-   `year_min` (int)
+-   `year_max` (int)
+-   `fuelType` (string)
+
+**Example:**
+
+```
+GET /api/vehicles?page=1&limit=20&brand=Toyota&price_max=100000
+```
+
+**Response (200):**
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 15
+  }
+}
+```
+
+#### GET `/api/vehicles/{id}`
+
+Buscar veículo por ID
+
+**Response (200):**
+
+```json
+[
+  {
+    "id": "uuid",
+    "brand": "Toyota",
+    "model": "Corolla",
+    "price": 85000.00,
+    ...
+  }
+]
+```
+
+#### PUT/PATCH `/api/vehicles/{id}`
+
+Atualizar veículo (Requer: proprietário ou ROLE_ADMIN)
+
+**Request:** mesmo formato do POST (campos que deseja atualizar)
+
+#### DELETE `/api/vehicles/{id}`
+
+Deletar veículo (soft delete) (Requer: proprietário ou ROLE_ADMIN)
+
+**Response (200):**
+
+```json
+{
+    "message": "Vehicle deleted successfully"
+}
+```
+
+#### GET `/api/vehicles/{id}/compare`
+
+Comparar veículo com tabela FIPE
+
+**Response (200):**
+
+```json
+{
+    "vehicle": {
+        "id": "uuid",
+        "brand": "Toyota",
+        "model": "Corolla",
+        "year": 2020,
+        "price": 85000.0,
+        "fipe_code": "001004-1"
+    },
+    "fipe": {
+        "id": "uuid",
+        "fipe_code": "001004-1",
+        "price": 82000.0,
+        "reference_month": "2025-10",
+        "model_year": 2020
+    },
+    "comparison": {
+        "vehicle_price": 85000.0,
+        "fipe_price": 82000.0,
+        "difference": 3000.0,
+        "percentage_difference": 3.66,
+        "status": "within_fipe",
+        "recommendation": "Price aligned with FIPE table."
+    }
+}
+```
+
+---
+
+### Tabela FIPE
+
+#### GET `/api/fipe`
+
+Listar entradas FIPE
+
+**Query Parameters:**
+
+-   `page`, `limit` (paginação)
+-   `fipeCode` (string)
+-   `brand` (string)
+-   `model` (string)
+-   `referenceMonth` (string, formato: YYYY-MM)
+
+**Response (200):**
+
+```json
+{
+  "data": [...],
+  "pagination": {...}
+}
+```
+
+#### POST `/api/fipe`
+
+Registrar entrada FIPE manualmente (Requer: `ROLE_ADMIN`)
+
+**Request:**
+
+```json
+{
+    "fipeCode": "001004-1",
+    "brand": "Toyota",
+    "model": "Corolla XEI",
+    "category": "sedan",
+    "version": "2.0 16V",
+    "fuelType": "flex",
+    "price": 82000.0,
+    "currency": "BRL",
+    "referenceMonth": "2025-10",
+    "modelYear": 2020
+}
+```
+
+#### POST `/api/fipe/sync`
+
+Sincronizar dados da API FIPE externa (Requer: `ROLE_ADMIN`)
+
+**Request:**
+
+```json
+{
+    "vehicleType": "carros",
+    "brandCode": "21",
+    "modelCode": "3",
+    "yearCode": "2020-1"
+}
+```
+
+**Response (201):**
+
+```json
+{
+  "message": "FIPE data synchronized successfully",
+  "fipe_entry": {...},
+  "source_data": {...}
+}
+```
+
+---
+
+## Control de Acesso (ACL)
+
+### Voters Implementados
+
+#### VehicleVoter
+
+-   `VEHICLE_CREATE`: Apenas `ROLE_ADMIN`
+-   `VEHICLE_VIEW`: Todos autenticados
+-   `VEHICLE_EDIT`: Proprietário ou `ROLE_ADMIN`
+-   `VEHICLE_DELETE`: Proprietário ou `ROLE_ADMIN`
+
+#### FipeVoter
+
+-   `FIPE_CREATE`: Apenas `ROLE_ADMIN`
+-   `FIPE_EDIT`: Apenas `ROLE_ADMIN`
+-   `FIPE_DELETE`: Apenas `ROLE_ADMIN`
+-   `FIPE_VIEW`: Todos autenticados
+-   `FIPE_SYNC`: Apenas `ROLE_ADMIN`
+
+### Exemplo de Uso
+
+```php
+// No controller
+$this->denyAccessUnlessGranted('VEHICLE_EDIT', $vehicle);
+```
+
+---
+
+## Comandos Úteis
+
+### Criar Usuário Admin
+
+```bash
+docker compose -f docker-compose-dev.yaml exec app php bin/console app:seed:admin
+# Credenciais default: admin@pigz.com / admin123
+
+# Custom credentials:
+docker compose -f docker-compose-dev.yaml exec app php bin/console app:seed:admin --email=admin@test.com --password=mypass
+```
+
+### Limpar Cache
+
+```bash
+docker compose -f docker-compose-dev.yaml exec app php bin/console cache:clear
+```
+
+### Ver Rotas Disponíveis
+
+```bash
+docker compose -f docker-compose-dev.yaml exec app php bin/console debug:router
+```
+
+### Instalar Dependências
+
+```bash
+docker compose -f docker-compose-dev.yaml exec app composer install
+```
+
+---
+
+## Integração FIPE API
+
+Este projeto utiliza a API pública da FIPE: https://deividfortuna.github.io/fipe/
+
+### Adapter Pattern
+
+Foi implementado um adapter (`FipeApiClient`) que abstrai a comunicação com a API externa, seguindo o princípio de inversão de dependência:
+
+-   Interface: `Domain\Services\FipeServiceInterface`
+-   Implementação: `Infra\Adapter\Fipe\FipeApiClient`
+
+### Métodos Disponíveis
+
+-   `getBrands(vehicleType)`: Lista marcas
+-   `getModels(vehicleType, brandCode)`: Lista modelos
+-   `getYears(vehicleType, brandCode, modelCode)`: Lista anos
+-   `getVehicleValue(...)`: Busca preço FIPE completo
+
+---
+
+## Testes com Postman/Insomnia
+
+### Fluxo Básico de Teste
+
+1. **Criar Admin**
+
+```bash
+docker compose -f docker-compose-dev.yaml exec app php bin/console app:seed:admin
+```
+
+2. **Login** → `POST /api/auth/login` → Copiar token
+
+3. **Criar Veículo** → `POST /api/vehicles` (com Bearer token)
+
+4. **Sincronizar FIPE** → `POST /api/fipe/sync` (com Bearer token)
+
+5. **Comparar Preços** → `GET /api/vehicles/{id}/compare`
+
+6. **Listar com Filtros** → `GET /api/vehicles?brand=Toyota&price_max=100000`
+
+---
+
 ## Estrutura de Pastas Completa
 
 ```
