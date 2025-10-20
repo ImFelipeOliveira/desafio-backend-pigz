@@ -43,7 +43,7 @@ final class User
       $id,
       $email,
       password_hash($plainPassword, PASSWORD_ARGON2ID),
-      [$roles],
+      $roles,
       $now,
       $now,
     );
