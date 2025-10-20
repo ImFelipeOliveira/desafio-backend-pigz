@@ -35,6 +35,22 @@ class VehicleRepository extends ServiceEntityRepository implements VehicleReposi
     $this->getEntityManager()->flush();
   }
 
+  public function getAll(int $page, int $limit, array $filters = []): array
+  {
+    $qb = $this->createQueryBuilder('v');
+
+    foreach ($filters as $field => $value) {
+      $qb->andWhere("v.$field = :$field")
+        ->setParameter($field, $value);
+    }
+
+    $qb->setFirstResult(($page - 1) * $limit)
+      ->setMaxResults($limit);
+
+    $entities = $qb->getQuery()->getResult();
+    return array_map(fn($entity) => $entity->toDomain(), $entities);
+  }
+
   public function findById(string $id): ?Vehicle
   {
     $entity = $this->find($id);
@@ -136,6 +152,95 @@ class VehicleRepository extends ServiceEntityRepository implements VehicleReposi
     $qb->select('COUNT(v.id)')
       ->where('v.status = :status')
       ->setParameter('status', $status);
+
+    return (int) $qb->getQuery()->getSingleScalarResult();
+  }
+
+  public function findByFilters(array $filters, int $page, int $limit): array
+  {
+    $qb = $this->createQueryBuilder('v');
+
+    if (!empty($filters['brand'])) {
+      $qb->andWhere('v.brand = :brand')
+        ->setParameter('brand', $filters['brand']);
+    }
+
+    if (!empty($filters['model'])) {
+      $qb->andWhere('v.model = :model')
+        ->setParameter('model', $filters['model']);
+    }
+
+    if (isset($filters['price_min'])) {
+      $qb->andWhere('v.priceValue >= :price_min')
+        ->setParameter('price_min', $filters['price_min']);
+    }
+
+    if (isset($filters['price_max'])) {
+      $qb->andWhere('v.priceValue <= :price_max')
+        ->setParameter('price_max', $filters['price_max']);
+    }
+
+    if (isset($filters['year_min'])) {
+      $qb->andWhere('v.year >= :year_min')
+        ->setParameter('year_min', $filters['year_min']);
+    }
+
+    if (isset($filters['year_max'])) {
+      $qb->andWhere('v.year <= :year_max')
+        ->setParameter('year_max', $filters['year_max']);
+    }
+
+    if (!empty($filters['fuelType'])) {
+      $qb->andWhere('v.fuelType = :fuelType')
+        ->setParameter('fuelType', $filters['fuelType']);
+    }
+
+    $qb->setFirstResult(($page - 1) * $limit)
+      ->setMaxResults($limit);
+
+    $entities = $qb->getQuery()->getResult();
+    return array_map(fn($entity) => $entity->toDomain(), $entities);
+  }
+
+  public function countByFilters(array $filters): int
+  {
+    $qb = $this->createQueryBuilder('v');
+    $qb->select('COUNT(v.id)');
+
+    if (!empty($filters['brand'])) {
+      $qb->andWhere('v.brand = :brand')
+        ->setParameter('brand', $filters['brand']);
+    }
+
+    if (!empty($filters['model'])) {
+      $qb->andWhere('v.model = :model')
+        ->setParameter('model', $filters['model']);
+    }
+
+    if (isset($filters['price_min'])) {
+      $qb->andWhere('v.priceValue >= :price_min')
+        ->setParameter('price_min', $filters['price_min']);
+    }
+
+    if (isset($filters['price_max'])) {
+      $qb->andWhere('v.priceValue <= :price_max')
+        ->setParameter('price_max', $filters['price_max']);
+    }
+
+    if (isset($filters['year_min'])) {
+      $qb->andWhere('v.year >= :year_min')
+        ->setParameter('year_min', $filters['year_min']);
+    }
+
+    if (isset($filters['year_max'])) {
+      $qb->andWhere('v.year <= :year_max')
+        ->setParameter('year_max', $filters['year_max']);
+    }
+
+    if (!empty($filters['fuelType'])) {
+      $qb->andWhere('v.fuelType = :fuelType')
+        ->setParameter('fuelType', $filters['fuelType']);
+    }
 
     return (int) $qb->getQuery()->getSingleScalarResult();
   }
