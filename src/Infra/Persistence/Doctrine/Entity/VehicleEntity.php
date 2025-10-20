@@ -323,7 +323,7 @@ class VehicleEntity
 
   public static function fromDomain(Vehicle $vehicle): self
   {
-    $entity = new self();
+    $entity = new self($vehicle->getId());
     $entity->setBrand($vehicle->getSpecification()->getBrand());
     $entity->setModel($vehicle->getSpecification()->getModel());
     $entity->setVersion($vehicle->getSpecification()->getVersion());
@@ -331,11 +331,11 @@ class VehicleEntity
     $entity->setYear($vehicle->getYear()->getValue());
     $entity->setPriceValue($vehicle->getPrice()->getValue());
     $entity->setPriceCurrency($vehicle->getPrice()->getCurrency());
-    $entity->setStatus($vehicle->getStatus()->getLabel());
+    $entity->setStatus($vehicle->getStatus()->value);
     $entity->setMileage($vehicle->getMileage()->getKilometers());
-    $entity->setVin($vehicle->getVin());
-    $entity->setFuelType($vehicle->getFuelType()->getLabel());
-    $entity->setTransmission($vehicle->getTransmission()->getLabel());
+    $entity->setVin($vehicle->getVin()?->getNumber());
+    $entity->setFuelType($vehicle->getFuelType()->value);
+    $entity->setTransmission($vehicle->getTransmission()->value);
     $entity->setFipeCode($vehicle->getFipeCode()->getCode());
     $entity->setDescription($vehicle->getDescription());
     $entity->setImages($vehicle->getImages());
