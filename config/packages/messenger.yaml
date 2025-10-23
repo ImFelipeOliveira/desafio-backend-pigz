@@ -8,6 +8,11 @@ framework:
             async: "%env(MESSENGER_TRANSPORT_DSN)%"
             failed: "doctrine://default?queue_name=failed"
             # sync: 'sync://'
+            retry_strategy:
+                max_retries: 3
+                delay: 1000
+                multiplier: 2
+                max_delay: 0
 
         routing:
             # Route your messages to the transports
