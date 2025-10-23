@@ -11,12 +11,18 @@ use App\Application\UseCase\Fipe\SyncFipeDataUseCase;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\MessageBus;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Message\SendFipeDataToSync;
 
 #[Route('/fipe')]
 class FipeController extends AbstractController
 {
+
+  public function __construct(private MessageBusInterface $messageBus) {}
+
   #[Route('', name: 'app_list_fipe', methods: ['GET'])]
   public function list(Request $request, ListFipeEntriesUseCase $listUseCase): JsonResponse
   {
@@ -93,14 +99,15 @@ class FipeController extends AbstractController
         return $this->json(['error' => 'Invalid JSON'], JsonResponse::HTTP_BAD_REQUEST);
       }
 
-      $result = $syncUseCase->execute([
+      $this->messageBus->dispatch(new SendFipeDataToSync([
         'vehicleType' => $data['vehicleType'] ?? 'carros',
         'brandCode' => $data['brandCode'] ?? '',
         'modelCode' => $data['modelCode'] ?? '',
         'yearCode' => $data['yearCode'] ?? '',
-      ]);
+      ]));
 
-      return $this->json($result, JsonResponse::HTTP_CREATED);
+      $data = ['status' => 'Fipe data sync initiated.'];
+      return $this->json($data, JsonResponse::HTTP_CREATED);
     } catch (\InvalidArgumentException $e) {
       return $this->json(['error' => $e->getMessage()], $e->getCode() ?: JsonResponse::HTTP_BAD_REQUEST);
     }
