@@ -90,7 +90,7 @@ class FipeController extends AbstractController
 
   #[Route('/sync', name: 'app_sync_fipe', methods: ['POST'])]
   #[IsGranted('FIPE_SYNC')]
-  public function sync(Request $request, SyncFipeDataUseCase $syncUseCase): JsonResponse
+  public function sync(Request $request): JsonResponse
   {
     try {
       $data = json_decode($request->getContent() ?: '{}', true);
