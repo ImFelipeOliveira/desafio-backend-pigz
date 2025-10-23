@@ -93,8 +93,6 @@ class FipeController extends AbstractController
         return $this->json(['error' => 'Invalid JSON'], JsonResponse::HTTP_BAD_REQUEST);
       }
 
-      // vehicleType: carros, motos, caminhoes
-      // brandCode, modelCode, yearCode (ex: "2020-1")
       $result = $syncUseCase->execute([
         'vehicleType' => $data['vehicleType'] ?? 'carros',
         'brandCode' => $data['brandCode'] ?? '',
